@@ -3,6 +3,9 @@
 defined( 'ABSPATH' ) || exit;
 
 class WC_Product_Question
+/**
+ * A simply class for formatting comments a certain way.
+ */
 {   
     public $post_id;
 
@@ -11,12 +14,17 @@ class WC_Product_Question
         $this->post_id = $post_id;
     }
     public function new()
+    // The form for posting a 'new' question
     {
         set_query_var( 'post_id', $this->post_id );
         wc_get_template( 'new.php', array(), '', plugin_dir_path( __FILE__ ) . 'templates/question/' );
     }
 
     public function show( $question ){
+        /**
+         * The html markup of a question
+         * @param WC_Comment
+         */  
         $id = $question->comment_ID;
         $answers = $question->get_children();
         $badge = array(
@@ -40,6 +48,9 @@ class WC_Product_Question
     }
 
     public function new_answer( $id ){
+        /**
+         * The form for answering a question
+         */
         ?>
         <form id="new_answer" method="POST" action="<?php echo admin_url( 'admin-post.php' ) ?>">
             <label class="font-weight-bold m-0">answer this question</label>
@@ -53,7 +64,11 @@ class WC_Product_Question
         <?php
     }
 
-    public function index( $questions ){        
+    public function index( $questions ){
+        /**
+         * @param array [ WC_Comment, ... ]
+         * A list of questions 
+         */        
         echo '<ul class="list-group m-0">';
         foreach( $questions as $question ){
             $this->show( $question );
@@ -62,12 +77,20 @@ class WC_Product_Question
     }
 
     public function index_answers( $answers ){
+        /**
+         * @param array [ WC_Comment, ... ]
+         * A list of answers 
+         */     
         foreach( $answers as $answer ){
             $this->show_answer( $answer );
         }
     }
 
     public function show_answer( $answer ){
+        /**
+         * @param WC_Comment
+         * HTML markup for answer's.
+         */     
         $author = empty( $answer->comment_author ) ? 'Anonymous' : $answer->comment_author;
         $date = date( 'm-d-y', strtotime( $answer->comment_date ) );
         ?>

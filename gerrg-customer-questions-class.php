@@ -1,7 +1,10 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-class WC_Product_QA
+class Customer_Questions
+/**
+ * This is the Customer Question form. 
+ */
 {
     public $form = null;
     public $customer_questions = array();
@@ -15,11 +18,15 @@ class WC_Product_QA
     }
 
     public function get_customer_questions()
+    /**
+     * this is the initial query into product questions. Gets most recent.
+     */
     {
         $args = array(
             'post_id' => $this->post_id,
             'type'    => 'product_question',
-            'number'  => 5
+            'number'  => 5,
+            'order'   => 'DESC'
         );
         return get_comments( $args );
         
