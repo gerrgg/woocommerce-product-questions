@@ -13,10 +13,11 @@ class WC_Product_Question
     {
         $this->post_id = $post_id;
     }
-    public function new()
+    public function new( $question )
     // The form for posting a 'new' question
     {
         set_query_var( 'post_id', $this->post_id );
+        set_query_var( 'question', $question );
         wc_get_template( 'new.php', array(), '', plugin_dir_path( __FILE__ ) . 'templates/question/' );
     }
 
@@ -41,7 +42,14 @@ class WC_Product_Question
             </a>
             <span class="badge badge-pill ml-sm-3 <?php echo $badge['color'] ?>"><?php echo $badge['text'] ?></span>
             <div id="answers_to_question_<?php echo $id ?>" class="collapse">
-                <?php ( empty( $answers ) ) ? $this->new_answer( $id ) : $this->index_answers( $answers ); ?>
+                <?php 
+                if ( empty( $answers ) ) {
+                    $this->new_answer( $id );
+                } else { 
+                    $this->index_answers( $answers );
+                    $this->new_answer( $id );
+                }
+                ?>
             </div>
         </li>
         <?php

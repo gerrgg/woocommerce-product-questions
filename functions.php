@@ -60,23 +60,56 @@ function gerrg_get_product_qa_form(){
 
 function gerrg_create_question(){
     /**
-     * Creates the question
+     * Creates the question, checks for users with a matching ID or email. Creates them if doesn't exist.
      */
+    if( empty( $_POST['question'] ) ) wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 
-     // TODO: Plug in more author information.
-     // TODO: Automatically create an account for the email
-    $user_email = ( isset( $_POST['user_id'] ) ) ? get_user_meta( $_POST['user_id'], 'email', true ) : $_POST['email'];
-    
+    $user = gerrg_look_for_user( array(
+        'id' => $_POST['id'],
+        'email' => $_POST['email']
+    ) );
+
     $args = array(
         'comment_post_ID' => $_POST['post_id'],
-        'comment_author_email' => $user_email,
-        'comment_content' => $_POST['s_questions'],
+        'comment_author' => $user->user_login,
+        'comment_author_email' => $user->user_email,
+        'comment_content' => $_POST['question'],
         'comment_type'    => 'product_question',
-        'user_id'         => ( isset( $_POST['user_id'] ) ) ? $_POST['user_id'] : ''
+        'comment_author_IP' => $_SERVER['REMOTE_ADDR'],
+        'comment_agent' => $_SERVER['HTTP_USER_AGENT'],
+        'user_id'         => $user->ID,
+        'comment_approved' => 1,
     );
 
-    $comment_id = wp_insert_comment( $args );
+    $comment_id = wp_new_comment( $args );
     wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
+}
+
+function gerrg_look_for_user( $checklist ){
+    /**
+     * Attempts to get a user where column = key and row = value.
+     * @param array [ [key => value], ... ]
+     * @return WP_User | WP_Error
+     */
+    foreach( $checklist as $key => $value ){
+        $user = get_user_by( $key, $value );
+        if( false !== $user ) return $user;
+    }
+
+    // if we get this far... we are making a user!
+    return gerrg_create_user_by_email( $checklist['email'] );
+}
+
+function gerrg_create_user_by_email( $email ){
+    /**
+     * Quickly creates a user using the provided email.
+     * @param string
+     * @return WP_User | False
+     */
+    $username = explode('@', $email)[0];
+    $password = wp_generate_password(8);
+    $user_id = wp_create_user( $username, $password, $email );
+    return get_user_by( 'id', $user_id );
 }
 
 function gerrg_create_answer(){
@@ -84,17 +117,30 @@ function gerrg_create_answer(){
      * Simply create the awnser, set the parent to the question_id
      */
 
-     // TODO: More author data.
     if( ! isset( $_POST['post_id'], $_POST['question_id'] ) ) return;
+    if( empty( $_POST['answer'] ) ) wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
+
+ 
+    $user = get_user_by( 'id', $_POST['user_id'] );
+    $user_id = ( false === $user ) ? '' : $user->user_id;
 
     $args = array(
         'comment_post_ID'         => $_POST['post_id'],
         'comment_parent'          => $_POST['question_id'],
-        'comment_type'    => 'product_answer',
-        'comment_content' => $_POST['answer'],
-        'user_id'         => ! empty( $_POST['user_id'] ) ? $_POST['user_id'] : ''
+        'comment_content'         => $_POST['answer'],
+        'comment_type'            => 'product_answer',
+        'user_id'                 => $user_id,
     );
-    $comment_id = wp_insert_comment( $args );
+
+    // add user info if user
+    if( false !== $user){
+        $args['comment_author'] = $user->user_login;
+        $args['comment_author_email'] = $user->user_email;
+        $args['comment_author_IP'] = $_SERVER['REMOTE_ADDR'];
+        $args['comment_agent'] = $_SERVER['HTTP_USER_AGENT'];
+    }
+
+    $comment_id = wp_new_comment( $args );
     wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 }
 
@@ -105,17 +151,19 @@ function search_questions(){
      * @see wp_ajax_gerrg_search_questions
      */
     $q = $_POST['q'];
-    
-    $questions = get_comments( array(
+
+    $args = array(
         'post_parent' => $_POST['post_id'],
         'type'    => 'product_question',
-        'search'  => $q
-    ) );
+    );
+
+    if( ! empty( $q ) ) $args['s'] = $q;
     
+    $questions = get_comments( $args );
     $question = new WC_Product_Question( $_POST['post_id'] );
 
     ob_start();
-    empty( $questions ) ? $question->new() : $question->index( $questions );
+    empty( $questions ) ? $question->new( $q ) : $question->index( $questions );
     echo ob_get_clean();
 
     wp_die();

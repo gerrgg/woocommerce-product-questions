@@ -1,16 +1,18 @@
 jQuery( function( $ ) {
     var product_qa = {
-        $form: $('#product-qa'),
+        $search: $('#product-qa-search'),
         $results: $('#product-qa-results'),
 
         init: function(){
-            this.$form.on( 'keyup', 'input[name="s_questions"]', this.debounce( this.search_questions, 200 ) )
+            this.$search.keyup( this.debounce( this.search_questions, 200 ) )
         },
 
         search_questions( e ){
             // check if the question has a '?' or matches other questions.
             var q = e.target.value
-            var post_id = $('input[name="post_id"]').val();
+            var post_id = $('.product.type-product').attr('id').split('-');
+            post_id = post_id[post_id.length - 1];
+            
             if( q.length > 3 ){
                 $.post( wp_ajax.url, { action: 'gerrg_search_questions', q: q, post_id: post_id }, function( data ){
                     console.log( data );
