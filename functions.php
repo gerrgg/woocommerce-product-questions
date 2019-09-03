@@ -143,7 +143,53 @@ function gerrg_create_answer(){
     }
 
     $comment_id = wp_new_comment( $args );
+    gerrg_send_question_to_customers( $comment_id );
     wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
+}
+
+function gerrg_send_questions_to_customers( $comment_id )
+{
+    $comment = get_comment( $comment_id );
+    $product = wc_get_product( $comment->comment_post_ID );
+    $email_list = gerrg_get_customers_who_purchased_product( $comment->comment_post_ID );
+    $comment_link = $product->get_permalink() .'#comment-'. $comment_id;
+
+    if( ! in_array( get_bloginfo( 'admin_email' ), $email_list ) ){
+        array_push( $email_list, get_bloginfo( 'admin_email' ) );
+    }
+
+    $subject = 'A customer asked "' . $comment->comment_content . '".';
+
+    $html = '';
+    $html .= '<h3>'. $comment->comment_content .'</h3>';
+    $html .= '<p>Hello, a customer asked the following question "'. $comment->comment_content .'"</p>';
+    $html .= '<p>Do you know the answer to this question?</p>';
+    $html .= '<a href="'. $comment_link .'">Click here to answer the question</a>';
+    
+    if( ! empty( $email_list ) ){
+        foreach( $email_list as $user_id ){
+            $email = get_user_meta( $user_id, 'user_email', true );
+            wp_mail( $email, $subject, $html );
+        }
+    }
+}
+
+function gerrg_get_customers_who_purchased_product( $product_id ){
+    global $wpdb;
+    $order_item = $wpdb->prefix . 'woocommerce_order_items';
+    $order_item_meta = $wpdb->prefix . 'woocommerce_order_itemmeta';
+
+    $sql = "SELECT DISTINCT u.ID
+            FROM $wpdb->users u, $wpdb->posts p, $order_item i, $order_item_meta meta
+            WHERE p.post_type = 'shop_order'
+            AND p.post_status = 'wc-completed'
+            AND p.ID = i.order_id
+            AND i.order_item_type = 'line_item'
+            AND i.order_item_id = meta.order_item_id
+            AND meta.meta_key = '_product_id'
+            AND meta.meta_value = $product_id";
+            
+    return $wpdb->get_results( $sql );
 }
 
 function search_questions(){

@@ -34,7 +34,7 @@ class WC_Product_Question
         );
 
         ?>
-        <li class="list-group-item">
+        <li id="comment-<?php echo $id ?>" class="list-group-item">
             <a class="link-normal" data-toggle="collapse" href="#answers_to_question_<?php echo $id ?>" role="button" aria-expanded="false">
                 <span class="font-weight-bold pr-2">Q: </span>
                 <?php echo $question->comment_content ?>
