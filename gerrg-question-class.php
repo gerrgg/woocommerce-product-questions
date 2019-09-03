@@ -68,6 +68,7 @@ class WC_Product_Question
             <input type="hidden" name="question_id" value="<?php echo $id ?>" />
             <input type="hidden" name="action" value="gerrg_answer_question" />
             <button type="submit" form="new_answer" class="btn btn-success">answer</button>
+            <?php do_action( 'gerrg_after_new_answer' ) ?>
         </form>
         <?php
     }

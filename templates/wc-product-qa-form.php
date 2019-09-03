@@ -8,6 +8,7 @@
         </div>
         <input id="product-qa-search" type="text" name="s_questions" placeholder="Have a question? Search for answers" class="form-control" />
     </div>
+    <ul id="errors"></ul>
 </div>
 
 <div id="product-qa-results" class="mb-5 border-bottom">

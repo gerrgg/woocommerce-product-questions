@@ -45,7 +45,8 @@ function gerrg_fix_product_reviews_title(){
     // Simply fixes product reviews title. Was counting 'product_question' & 'product_answer'
     $reviews = get_comments( array(
         'post_id' => get_the_ID(),
-        'type'    => 'review'
+        'type'    => 'review',
+        'status'  => 'approve',
     ) );
 
     $count = sizeof( $reviews );
@@ -130,6 +131,7 @@ function gerrg_create_answer(){
         'comment_content'         => $_POST['answer'],
         'comment_type'            => 'product_answer',
         'user_id'                 => $user_id,
+        'comment_approved'        => '0',
     );
 
     // add user info if user
@@ -155,6 +157,7 @@ function search_questions(){
     $args = array(
         'post_parent' => $_POST['post_id'],
         'type'    => 'product_question',
+        'status'  => 'approve',
     );
 
     if( ! empty( $q ) ) $args['s'] = $q;

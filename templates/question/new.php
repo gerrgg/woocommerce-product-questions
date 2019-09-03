@@ -10,5 +10,6 @@
     <input type="hidden" name="post_id" value="<?php echo get_query_var('post_id') ?>" />
     <input type="hidden" name="user_id" value="<?php echo get_current_user_id() ?>" />
     <input type="hidden" name="action" value="gerrg_ask_question" />
+    <?php do_action( 'gerrg_after_question_new' ) ?>
 </form>
 

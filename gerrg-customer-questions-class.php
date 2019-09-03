@@ -24,9 +24,10 @@ class Customer_Questions
     {
         $args = array(
             'post_id' => $this->post_id,
+            'status'  => 'approve',
             'type'    => 'product_question',
             'number'  => 5,
-            'order'   => 'DESC'
+            'order'   => 'DESC',
         );
         return get_comments( $args );
         
