@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       WooCommerce Product Questions and Answers
- * Description:       A simple form added to 'woocommerce_after_single_product_summary' hook which allows users to search for, ask and awnser questions about a product.
+ * Description:       A simple form added to 'woocommerce_after_single_product_summary' hook which allows users to search for, ask and answer questions about a product.
  * Version:           0.5
  * Author:            Greg Bastianelli
  * Author URI:        http://gerrg.com
@@ -79,7 +79,6 @@ function gerrg_create_question(){
         'comment_author_IP' => $_SERVER['REMOTE_ADDR'],
         'comment_agent' => $_SERVER['HTTP_USER_AGENT'],
         'user_id'         => $user->ID,
-        'comment_approved' => 1,
     );
 
     $comment_id = wp_new_comment( $args );
@@ -115,7 +114,7 @@ function gerrg_create_user_by_email( $email ){
 
 function gerrg_create_answer(){
     /**
-     * Simply create the awnser, set the parent to the question_id
+     * Simply create the answer, set the parent to the question_id
      */
 
     if( ! isset( $_POST['post_id'], $_POST['question_id'] ) ) return;
@@ -131,7 +130,6 @@ function gerrg_create_answer(){
         'comment_content'         => $_POST['answer'],
         'comment_type'            => 'product_answer',
         'user_id'                 => $user_id,
-        'comment_approved'        => '0',
     );
 
     // add user info if user
@@ -143,7 +141,6 @@ function gerrg_create_answer(){
     }
 
     $comment_id = wp_new_comment( $args );
-    gerrg_send_question_to_customers( $comment_id );
     wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 }
 
