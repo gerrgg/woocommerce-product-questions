@@ -3,8 +3,13 @@ A simple form added to 'woocommerce_after_single_product_summary' hook which all
 
 ## TODO
 [x] - Moderate questions/answers
+[] - Provide the user feedback when a question / answer is successfully submitted. (AJAX)
 [] - Search for users who purchased product 'X', email them the question. Must have unsubscribe feature.
+[] - Email the admin and team ( role specific ) the question.
 [] - Single product top review count is off, fix filter.
+[] - Email the asker when a question is answered
+[] - Include a JS event that will open the question the user wants to answer. ( or seperate form in case of not approved ).
+[] - We cannot let any post questions to our users. Must create seperate answer form. (CRUD?, Seperate Page)
 [x] - Use PHP/JS to validate questions, is it a question, is it blank? is it short?
 [x] - Add recaptcha to FORMS ( add hook for add recaptcha from theme! )
 [x] - Limit question query on initial page load, LIMIT 5

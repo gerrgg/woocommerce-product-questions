@@ -54,35 +54,12 @@ function gerrg_fix_product_reviews_title(){
 }
 
 function gerrg_get_product_qa_form(){
+    /**
+     * Displays the HTML template for the Customer Questions Form.
+     */
     $product_qa = new Customer_Questions( get_the_ID() );
     set_query_var( 'qa', $product_qa );
     wc_get_template( 'templates/wc-product-qa-form.php', array(), '', plugin_dir_path( __FILE__ ) );
-}
-
-function gerrg_create_question(){
-    /**
-     * Creates the question, checks for users with a matching ID or email. Creates them if doesn't exist.
-     */
-    if( empty( $_POST['question'] ) ) wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
-
-    $user = gerrg_look_for_user( array(
-        'id' => $_POST['id'],
-        'email' => $_POST['email']
-    ) );
-
-    $args = array(
-        'comment_post_ID' => $_POST['post_id'],
-        'comment_author' => $user->user_login,
-        'comment_author_email' => $user->user_email,
-        'comment_content' => $_POST['question'],
-        'comment_type'    => 'product_question',
-        'comment_author_IP' => $_SERVER['REMOTE_ADDR'],
-        'comment_agent' => $_SERVER['HTTP_USER_AGENT'],
-        'user_id'         => $user->ID,
-    );
-
-    $comment_id = wp_new_comment( $args );
-    wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 }
 
 function gerrg_look_for_user( $checklist ){
@@ -106,20 +83,55 @@ function gerrg_create_user_by_email( $email ){
      * @param string
      * @return WP_User | False
      */
-    $username = explode('@', $email)[0];
+    $username = explode('@', $email)[0] . rand(100, 999);
     $password = wp_generate_password(8);
     $user_id = wp_create_user( $username, $password, $email );
+    var_dump( $user_id );
     return get_user_by( 'id', $user_id );
+}
+
+function gerrg_create_question(){
+    /**
+     * Creates the question, checks for users with a matching ID or email. Creates them if doesn't exist.
+     */
+    if( empty( $_POST['question'] ) ) wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
+
+    var_dump( $_POST );
+
+    $user = gerrg_look_for_user( array(
+        'id' => $_POST['user_id'],
+        'email' => ( isset( $_POST['email'] ) ) ? $_POST['email'] : '',
+    ) );
+
+    $args = array(
+        'comment_post_ID'       => $_POST['post_id'],
+        'comment_author'        => $user->user_login,
+        'comment_author_email'  => $user->user_email,
+        'comment_author_url'   => '',
+        'comment_content'       => $_POST['question'],
+        'comment_type'          => 'product_question',
+        'comment_author_IP'     => $_SERVER['REMOTE_ADDR'],
+        'comment_agent'         => $_SERVER['HTTP_USER_AGENT'],
+        'user_id'               => $user->ID,
+    );
+
+    var_dump( $args );
+
+    $comment_id = wp_new_comment( $args );
+
+    gerrg_send_questions_to_customers( $comment_id );
+
+    // TODO: this redirect gives no feedback to user
+    wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 }
 
 function gerrg_create_answer(){
     /**
-     * Simply create the answer, set the parent to the question_id
+     * Create the answer, set the parent to the question_id
      */
 
     if( ! isset( $_POST['post_id'], $_POST['question_id'] ) ) return;
     if( empty( $_POST['answer'] ) ) wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
-
  
     $user = get_user_by( 'id', $_POST['user_id'] );
     $user_id = ( false === $user ) ? '' : $user->user_id;
@@ -141,49 +153,106 @@ function gerrg_create_answer(){
     }
 
     $comment_id = wp_new_comment( $args );
+    
+    // TODO: this redirect gives no feedback to user
+    // TODO: Email the asker answer's to their question
     wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 }
 
 function gerrg_send_questions_to_customers( $comment_id )
 {
+    /**
+     * Puts together a list of verified users and store admins, then emails the question to those users
+     * @param int
+     */
+
+    //data
     $comment = get_comment( $comment_id );
     $product = wc_get_product( $comment->comment_post_ID );
-    $email_list = gerrg_get_customers_who_purchased_product( $comment->comment_post_ID );
-    $comment_link = $product->get_permalink() .'#comment-'. $comment_id;
 
-    if( ! in_array( get_bloginfo( 'admin_email' ), $email_list ) ){
-        array_push( $email_list, get_bloginfo( 'admin_email' ) );
-    }
-
+    //settings
+    $headers = array('Content-Type: text/html; charset=UTF-8');
     $subject = 'A customer asked "' . $comment->comment_content . '".';
 
-    $html = '';
-    $html .= '<h3>'. $comment->comment_content .'</h3>';
-    $html .= '<p>Hello, a customer asked the following question "'. $comment->comment_content .'"</p>';
-    $html .= '<p>Do you know the answer to this question?</p>';
-    $html .= '<a href="'. $comment_link .'">Click here to answer the question</a>';
+    // gather list
+    $email_list = gerrg_generate_email_list( $comment->comment_post_ID );
     
-    if( ! empty( $email_list ) ){
-        foreach( $email_list as $user_id ){
-            $email = get_user_meta( $user_id, 'user_email', true );
-            wp_mail( $email, $subject, $html );
-        }
+    // create html
+    $html = gerrg_generate_email_html( $comment, $product );
+
+    if ( ! empty( $email_list ) ){
+        foreach ( $email_list as $email) wp_mail( $email, $subject, $html, $headers );
     }
 }
 
+function gerrg_generate_email_list( $product_id )
+{
+    /**
+     * Generates a list of people who either purchased the product in the past or is a store admin
+     * @param int
+     * @return array - [string, ...]
+     */
+    $email_list = array();
+
+     // get verified customers - returns ID
+    $user_list = gerrg_get_customers_who_purchased_product( $product_id );
+
+    // get admins - Returns ID
+    $admins = get_users( array( 'fields' => 'ID', 'role' => 'administrator' ) );
+
+    //pushes more ID's into list
+    foreach( $admins as $user_id ){ 
+        array_push( $user_list, $user_id ); 
+    }
+
+    // convert id's to email's
+    foreach( $user_list as $user_id ){
+        if( ! empty( $user_id ) ){
+            $userdata = get_userdata( $user_id );
+            $email = $userdata->user_email;
+            if( ! empty( $email ) ) array_push( $email_list, $email );
+        }
+    }
+
+    return $email_list;
+}
+
+function gerrg_generate_email_html( $comment, $product ){
+    /**
+     * Generates the html for email
+     * @param WP_Comment,WP_Product
+     * @return string - formatted html
+     */
+    $comment_link = $product->get_permalink() .'#comment-'. $comment->comment_ID;
+    
+    $custom_logo_id = get_theme_mod( 'custom_logo' );
+    $image = wp_get_attachment_image_src( $custom_logo_id , 'medium' );
+
+    $html = '<img src="'. $image[0] .'" />';
+    $html .= '<h3>"'. $comment->comment_content .'"</h3>';
+    $html .= '<p>Hello, a customer asked the following question "'. $comment->comment_content .'" about the <strong>'. $product->get_name() .'</strong>.</p>';
+    $html .= '<p>Can you help us out here? Do you know the answer to this question?</p>';
+    $html .= '<a href="'. $comment_link .'">Click here to answer the question</a>';
+
+    return $html;
+}
+
 function gerrg_get_customers_who_purchased_product( $product_id ){
+    /**
+     * A seemingly complex SQL query which gets all user ID's of users who purchased a product.
+     */
     global $wpdb;
     $order_item = $wpdb->prefix . 'woocommerce_order_items';
     $order_item_meta = $wpdb->prefix . 'woocommerce_order_itemmeta';
 
-    $sql = "SELECT DISTINCT u.ID
-            FROM $wpdb->users u, $wpdb->posts p, $order_item i, $order_item_meta meta
+    $sql = "SELECT DISTINCT p_meta.meta_value
+            FROM $wpdb->users u, $wpdb->posts p, $wpdb->postmeta p_meta, $order_item i, $order_item_meta meta
             WHERE p.post_type = 'shop_order'
             AND p.post_status = 'wc-completed'
             AND p.ID = i.order_id
+            AND p_meta.post_id = P.ID
             AND i.order_item_type = 'line_item'
             AND i.order_item_id = meta.order_item_id
-            AND meta.meta_key = '_product_id'
             AND meta.meta_value = $product_id";
             
     return $wpdb->get_results( $sql );
