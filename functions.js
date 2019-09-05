@@ -17,7 +17,6 @@ jQuery( function( $ ) {
         },
 
         search_questions( e ){
-            // check if the question has a '?' or matches other questions.
             var q = e.target.value
             var post_id = $('.product.type-product').attr('id').split('-');
             post_id = post_id[post_id.length - 1];

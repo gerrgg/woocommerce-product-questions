@@ -23,11 +23,11 @@ class WC_Product_Question
 
     public function show( $question ){
         /**
-         * The html markup of a question
+         * The html markup of a question including any approved answers.
          * @param WC_Comment
          */  
         $id = $question->comment_ID;
-        $answers = $question->get_children();
+        $answers = $question->get_children( array( 'status' => 1 ) );
         $badge = array(
             'color' => ( ! empty( $answers ) ) ? 'badge-success' : 'badge-danger',
             'text' => ( ! empty( $answers ) ) ? sizeof( $answers ) . ' answers' : 'None',
