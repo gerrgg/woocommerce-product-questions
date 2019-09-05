@@ -5,6 +5,15 @@ jQuery( function( $ ) {
 
         init: function(){
             this.$search.keyup( this.debounce( this.search_questions, 200 ) )
+            this.$results.on('click', "button#ask-question", this.submit)
+            this.$results.on('click', "button.submit-answer", this.submit)
+        },
+
+        submit( e ){
+            $form = $(e.currentTarget.form);
+            $.post( wp_ajax.url, $form.serialize(), function( data ){
+                $form.html( data );
+            } );
         },
 
         search_questions( e ){
@@ -15,7 +24,6 @@ jQuery( function( $ ) {
             
             if( q.length > 3 ){
                 $.post( wp_ajax.url, { action: 'gerrg_search_questions', q: q, post_id: post_id }, function( data ){
-                    console.log( data );
                     product_qa.$results.html( data );
                 } );
             }

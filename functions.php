@@ -27,11 +27,11 @@ add_action( 'wp_ajax_nopriv_gerrg_search_questions', 'search_questions' );
 
 // add admin_post hooks for posting questions & answer's
 // TODO: Make ajax?
-add_action( 'admin_post_gerrg_ask_question', 'gerrg_create_question' );
-add_action( 'admin_post_nopriv_gerrg_ask_question', 'gerrg_create_question' );
+add_action( 'wp_ajax_gerrg_ask_question', 'gerrg_create_question' );
+add_action( 'wp_ajax_nopriv_gerrg_ask_question', 'gerrg_create_question' );
 
-add_action( 'admin_post_gerrg_answer_question', 'gerrg_create_answer' );
-add_action( 'admin_post_nopriv_gerrg_answer_question', 'gerrg_create_answer' );
+add_action( 'wp_ajax_gerrg_answer_question', 'gerrg_create_answer' );
+add_action( 'wp_ajax_nopriv_gerrg_answer_question', 'gerrg_create_answer' );
 
 // Fixes the count displayed in # of reviews.
 add_filter( 'woocommerce_reviews_title', 'gerrg_fix_product_reviews_title');
@@ -86,7 +86,6 @@ function gerrg_create_user_by_email( $email ){
     $username = explode('@', $email)[0] . rand(100, 999);
     $password = wp_generate_password(8);
     $user_id = wp_create_user( $username, $password, $email );
-    var_dump( $user_id );
     return get_user_by( 'id', $user_id );
 }
 
@@ -95,8 +94,6 @@ function gerrg_create_question(){
      * Creates the question, checks for users with a matching ID or email. Creates them if doesn't exist.
      */
     if( empty( $_POST['question'] ) ) wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
-
-    var_dump( $_POST );
 
     $user = gerrg_look_for_user( array(
         'id' => $_POST['user_id'],
@@ -115,14 +112,16 @@ function gerrg_create_question(){
         'user_id'               => $user->ID,
     );
 
-    var_dump( $args );
 
     $comment_id = wp_new_comment( $args );
-
     gerrg_send_questions_to_customers( $comment_id );
 
-    // TODO: this redirect gives no feedback to user
-    wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
+    //html
+    $success = '<p class="text-center"><i class="fas fa-check text-success fa-2x"></i> Thank you! We are looking around for you.</p>';
+    $error = '<p class="text-center"><i class="fas fa-times text-danger fa-2x"></i> An error occured. Try again or call us.</p>';
+    echo ( ! empty( $comment_id ) ) ? $success : $error;
+
+    wp_die();
 }
 
 function gerrg_create_answer(){
@@ -153,10 +152,12 @@ function gerrg_create_answer(){
     }
 
     $comment_id = wp_new_comment( $args );
-    
-    // TODO: this redirect gives no feedback to user
+
+    $success = '<p class="text-center"><i class="fas fa-check text-success fa-2x"></i> Thank you! We appreciate your input!</p>';
+    $error = '<p class="text-center"><i class="fas fa-times text-danger fa-2x"></i>Sorry, your submission failed, please try again!</p>';
+    echo ( ! empty( $comment_id ) ) ? $success : $error;
+    wp_die();
     // TODO: Email the asker answer's to their question
-    wp_redirect( get_permalink( $_POST['post_id'] ) . '#product-qa' );
 }
 
 function gerrg_send_questions_to_customers( $comment_id )
@@ -195,7 +196,8 @@ function gerrg_generate_email_list( $product_id )
     $email_list = array();
 
      // get verified customers - returns ID
-    $user_list = gerrg_get_customers_who_purchased_product( $product_id );
+     // TODO: Just Admins for now.
+    // $user_list = gerrg_get_customers_who_purchased_product( $product_id );
 
     // get admins - Returns ID
     $admins = get_users( array( 'fields' => 'ID', 'role' => 'administrator' ) );

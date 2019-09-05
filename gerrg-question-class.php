@@ -60,14 +60,14 @@ class WC_Product_Question
          * The form for answering a question
          */
         ?>
-        <form id="new_answer" method="POST" action="<?php echo admin_url( 'admin-post.php' ) ?>">
+        <form method="POST">
             <label class="font-weight-bold m-0">answer this question</label>
             <textarea name="answer" class="form-control" placeholder="Your answers help others learn about this product" required></textarea>
             <input type="hidden" name="post_id" value="<?php echo $this->post_id ?>" />
             <input type="hidden" name="user_id" value="<?php echo get_current_user_id() ?>" />
             <input type="hidden" name="question_id" value="<?php echo $id ?>" />
             <input type="hidden" name="action" value="gerrg_answer_question" />
-            <button type="submit" form="new_answer" class="btn btn-success">answer</button>
+            <button type="button" role="button" class="btn btn-success submit-answer">answer</button>
             <?php do_action( 'gerrg_after_new_answer' ) ?>
         </form>
         <?php
