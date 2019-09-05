@@ -157,7 +157,6 @@ function gerrg_create_answer(){
     $error = '<p class="text-center"><i class="fas fa-times text-danger fa-2x"></i>Sorry, your submission failed, please try again!</p>';
     echo ( ! empty( $comment_id ) ) ? $success : $error;
     wp_die();
-    // TODO: Email the asker answer's to their question
 }
 
 function gerrg_send_questions_to_customers( $comment_id )
