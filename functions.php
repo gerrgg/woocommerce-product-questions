@@ -35,6 +35,11 @@ add_action( 'wp_ajax_nopriv_gerrg_answer_question', 'gerrg_create_answer' );
 
 // Fixes the count displayed in # of reviews.
 add_filter( 'woocommerce_reviews_title', 'gerrg_fix_product_reviews_title');
+add_filter( 'woocommerce_product_review_list_args', 'gerrg_fix_product_reviews_list' );
+
+function gerrg_fix_product_reviews_list( $args ){
+    return array( 'type' => 'review' );
+}
 
 function gerrg_enqueue_scripts(){
     wp_enqueue_script( 'gerrg-functions', plugin_dir_url( __FILE__ ) . 'functions.js', array('jquery'), '', true );
