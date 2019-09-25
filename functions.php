@@ -11,7 +11,6 @@
  * Domain Path:       /languages
  */
 
-var_dump( gerrg_generate_email_list() );
 
  // grab the classes
 require_once plugin_dir_path( __FILE__ ) . 'gerrg-customer-questions-class.php';
@@ -159,12 +158,48 @@ function gerrg_create_answer(){
     }
 
     $comment_id = wp_new_comment( $args );
+    gerrg_email_asker( $comment_id );
 
     $success = '<p class="text-center"><i class="fas fa-check text-success fa-2x"></i> Thank you! We appreciate your input!</p>';
     $error = '<p class="text-center"><i class="fas fa-times text-danger fa-2x"></i>Sorry, your submission failed, please try again!</p>';
+
     echo ( ! empty( $comment_id ) ) ? $success : $error;
     wp_die();
 }
+
+function gerrg_email_asker( $comment_id ){
+    /**
+     * Find the comment question, email the poster the new answer.
+     * @param int - ID of the answer to the question
+     */
+
+     // get Q and A
+    $answer = get_comment( $comment_id );
+    $question = get_comment( $answer->comment_parent );
+    $question_content = stripslashes($question->comment_content);
+    $product = wc_get_product($question->comment_post_ID);
+
+    // Link to question on product page
+    $comment_link = $product->get_permalink() .'#comment-'. $question->comment_ID;
+
+    // setup email
+    $to = $question->comment_author_email;
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+    $subject = sizeof($question->get_children()) . " answers to your question '" . $question_content . "'.";
+
+    $logo = Customer_Questions::get_site_logo();
+
+    $html = '<img src="'. $logo .'" />';
+    $html .= "<h4>Someone has answered your question!</h4>";
+    $html .= "<p>You asked: '$question_content'</p>";
+    $html .= "<p>Your answer: '$answer->comment_content'</p>";
+
+    $html .= '<a href="'. $comment_link .'">Click here to see the answer</a>';
+
+    wp_mail($to, $subject, $html, $headers);
+    
+}
+
 
 function gerrg_send_questions_to_customers( $comment_id )
 {
@@ -179,7 +214,7 @@ function gerrg_send_questions_to_customers( $comment_id )
 
     //settings
     $headers = array('Content-Type: text/html; charset=UTF-8');
-    $subject = 'A customer asked "' . $comment->comment_content . '".';
+    $subject = 'A customer asked "' . stripslashes($comment->comment_content) . '".';
 
     // gather list
     $email_list = gerrg_generate_email_list( $comment->comment_post_ID );
@@ -223,13 +258,15 @@ function gerrg_generate_email_html( $comment, $product ){
      * @return string - formatted html
      */
     $comment_link = $product->get_permalink() .'#comment-'. $comment->comment_ID;
-    
+    $content = stripslashes($comment->comment_content);
+
+
     $custom_logo_id = get_theme_mod( 'custom_logo' );
-    $image = wp_get_attachment_image_src( $custom_logo_id , 'medium' );
+    $image = wp_get_attachment_image_url( $custom_logo_id , 'medium' );
 
     $html = '<img src="'. $image[0] .'" />';
-    $html .= '<h3>"'. $comment->comment_content .'"</h3>';
-    $html .= '<p>Hello, a customer asked the following question "'. $comment->comment_content .'" about the <strong>'. $product->get_name() .'</strong>.</p>';
+    $html .= '<h3>"'. stripslashes($content) .'"</h3>';
+    $html .= '<p>Hello, a customer asked the following question "'. $content .'" about the <strong>'. $product->get_name() .'</strong>.</p>';
     $html .= '<p>Can you help us out here? Do you know the answer to this question?</p>';
     $html .= '<a href="'. $comment_link .'">Click here to answer the question</a>';
 
