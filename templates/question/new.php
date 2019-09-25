@@ -10,7 +10,7 @@
         <?php endif; ?>
         <button id="ask-question" type="button" role="button" class="btn btn-dark">Ask</button>
     </div>
-    <input type="hidden" name="question" value="<?php echo get_query_var('question') ?>" />
+    <input type="hidden" class="alter" name="question" value="<?php echo htmlspecialchars( get_query_var( 'question') ) ?>" />
     <input type="hidden" name="post_id" value="<?php echo get_query_var('post_id') ?>" />
     <input type="hidden" name="user_id" value="<?php echo get_current_user_id() ?>" />
     <input type="hidden" name="action" value="gerrg_ask_question" />

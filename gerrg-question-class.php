@@ -37,7 +37,7 @@ class WC_Product_Question
         <li id="comment-<?php echo $id ?>" class="list-group-item">
             <a class="link-normal" data-toggle="collapse" href="#answers_to_question_<?php echo $id ?>" role="button" aria-expanded="false">
                 <span class="font-weight-bold pr-2">Q: </span>
-                <?php echo $question->comment_content ?>
+                <?php echo stripslashes($question->comment_content) ?>
                 <span class="float-right"><i class="fas fa-chevron-down"></i></span>
             </a>
             <span class="badge badge-pill ml-sm-3 <?php echo $badge['color'] ?>"><?php echo $badge['text'] ?></span>

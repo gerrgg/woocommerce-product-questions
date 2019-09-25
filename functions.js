@@ -11,6 +11,7 @@ jQuery( function( $ ) {
 
         submit( e ){
             $form = $(e.currentTarget.form);
+
             $.post( wp_ajax.url, $form.serialize(), function( data ){
                 $form.html( data );
             } );
