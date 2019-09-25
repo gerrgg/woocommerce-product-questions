@@ -30,7 +30,7 @@ class WC_Product_Question
         $answers = $question->get_children( array( 'status' => 1 ) );
         $badge = array(
             'color' => ( ! empty( $answers ) ) ? 'badge-success' : 'badge-danger',
-            'text' => ( ! empty( $answers ) ) ? sizeof( $answers ) . ' answers' : 'None',
+            'text' => ( ! empty( $answers ) ) ? sizeof( $answers ) . ' answer' : 'None',
         );
 
         ?>

@@ -11,6 +11,8 @@
  * Domain Path:       /languages
  */
 
+var_dump( gerrg_generate_email_list() );
+
  // grab the classes
 require_once plugin_dir_path( __FILE__ ) . 'gerrg-customer-questions-class.php';
 require_once plugin_dir_path( __FILE__ ) . 'gerrg-question-class.php';
@@ -190,7 +192,7 @@ function gerrg_send_questions_to_customers( $comment_id )
     }
 }
 
-function gerrg_generate_email_list( $product_id )
+function gerrg_generate_email_list( )
 {
     /**
      * Generates a list of people who either purchased the product in the past or is a store admin
@@ -198,27 +200,18 @@ function gerrg_generate_email_list( $product_id )
      * @return array - [string, ...]
      */
     $email_list = array();
+    $user_list = array();
 
      // get verified customers - returns ID
      // TODO: Just Admins for now.
-    // $user_list = gerrg_get_customers_who_purchased_product( $product_id );
 
     // get admins - Returns ID
-    $admins = get_users( array( 'fields' => 'ID', 'role' => 'administrator' ) );
-
-    //pushes more ID's into list
-    foreach( $admins as $user_id ){ 
-        array_push( $user_list, $user_id ); 
+    $admins = get_users( array( 'fields' => array('user_email'), 'role' => 'administrator' ) );
+    foreach( $admins as $admin ){
+        array_push( $email_list, $admin->user_email );
     }
 
-    // convert id's to email's
-    foreach( $user_list as $user_id ){
-        if( ! empty( $user_id ) ){
-            $userdata = get_userdata( $user_id );
-            $email = $userdata->user_email;
-            if( ! empty( $email ) ) array_push( $email_list, $email );
-        }
-    }
+    
 
     return $email_list;
 }
