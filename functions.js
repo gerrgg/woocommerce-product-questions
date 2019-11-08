@@ -4,12 +4,12 @@ jQuery( function( $ ) {
         $results: $('#product-qa-results'),
 
         init: function(){
-            this.$search.keyup( this.debounce( this.search_questions, 200 ) )
-            this.$results.on('click', "button#ask-question", this.submit)
-            this.$results.on('click', "button.submit-answer", this.submit)
+            this.$search.keyup( this.debounce( this.search_questions, 200 ) );
+            this.$results.on('click', "button#ask-question", this.submit);
+            this.$results.on('click', "button.submit-answer", this.submit);
         },
 
-        submit( e ){
+        submit: function( e ){
             $form = $(e.currentTarget.form);
 
             $.post( wp_ajax.url, $form.serialize(), function( data ){
@@ -17,7 +17,7 @@ jQuery( function( $ ) {
             } );
         },
 
-        search_questions( e ){
+        search_questions: function( e ){
             var q = e.target.value
             var post_id = $('.product.type-product').attr('id').split('-');
             post_id = post_id[post_id.length - 1];
@@ -29,7 +29,7 @@ jQuery( function( $ ) {
             }
         },
 
-        debounce(fn, bufferInterval) {
+        debounce: function(fn, bufferInterval) {
             var timeout;
           
             return function () {
@@ -39,5 +39,7 @@ jQuery( function( $ ) {
           
           }
     }
+
+
     product_qa.init();
 });
